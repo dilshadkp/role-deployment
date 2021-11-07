@@ -1,5 +1,0 @@
----
-- name: "git_url"
-  prompt: "Enter Git URL"
-  private: no
-
