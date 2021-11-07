@@ -1,0 +1,50 @@
+---
+# tasks file for deployment
+###############################CLONE APPLICATION FROM GITHUB#####################################
+    - name: "clone repository from Github"
+      git:
+        repo: "{{git_url}}"
+        dest: "{{clone_dir}}"
+      register: git_info
+######################OFF-LOAD INSTANCE FROM LB AND WAIT FOR CONNECTION DRAINING##################
+    - name: "off-load instance from loadbalancer"
+      when: git_info.changed == true
+      service:
+        name: httpd
+        state: stopped
+
+    - name: "wait for connection draining"
+      when: git_info.changed == true
+      pause:
+        seconds: 10
+######################COPY CONTENT TO DOC ROOT AND LOAD INSTANCE TO LB###########################
+    - name: "copy contents to document root"
+      when: git_info.changed == true
+      copy:
+        src: "{{clone_dir}}"
+        dest: "/var/www/html/"
+        owner: "apache"
+        group: "apache"
+        remote_src: true 
+
+    - name: "Load instance back to loadbalancer"
+      when: git_info.changed == true
+      service:
+        name: httpd
+        state: restarted
+        enabled: true
+
+    - name: "wait for health check pass"
+      when: git_info.changed == true
+      pause:
+        seconds: 20
+####################################PRINT SUCCESS MESSAGE#########################################
+    - name: "deployment status"
+      when: git_info.changed == false
+      debug:
+        msg: " {{ansible_hostname}} {{ansible_host}} already have the latest version"
+
+    - name: "deployment status 2"
+      when: git_info.changed == true
+      debug:
+        msg: " {{ansible_hostname}} {{ansible_host}} DEPLOYMENT SUCCESSFULL"
