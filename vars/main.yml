@@ -1,5 +1,5 @@
 ---
 # vars file for deployment
 clone_dir: "/var/www/website/"
-git_url: "https://github.com/dilshadkp/deployment.git"
+git_url: ""
 
